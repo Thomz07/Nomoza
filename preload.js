@@ -1,5 +1,9 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  openFolder: () => ipcRenderer.invoke('dialog:openFolder')
-});
+	selectFolder: () => ipcRenderer.invoke('select-folder'),
+	getSavedFolder: () => ipcRenderer.invoke('get-folder'),
+	getDirectoryStructure: (path) => ipcRenderer.invoke('get-directory-structure', path),
+  watchFolder: (path) => ipcRenderer.invoke('watch-folder', path),
+	onFolderChanged: (callback) => ipcRenderer.on('folder-changed', callback)
+})

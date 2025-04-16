@@ -1,38 +1,70 @@
-const { app, BrowserWindow, dialog } = require('electron');
-const path = require('path');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron')
+const path = require('path')
+const fs = require('fs')
+let currentWatcher = null
+
+const CONFIG_PATH = path.join(__dirname, 'config.json')
 
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-    },
-  });
-
-  win.loadFile('index.html');
+	const win = new BrowserWindow({
+		width: 1400,
+		height: 800,
+		webPreferences: {
+			preload: path.join(__dirname, 'preload.js'),
+			contextIsolation: true,
+			nodeIntegration: false
+		}
+	})
+	win.loadFile('index.html')
 }
 
-app.whenReady().then(createWindow);
+ipcMain.handle('select-folder', async () => {
+	const result = await dialog.showOpenDialog({
+		properties: ['openDirectory']
+	})
+	if (result.canceled) return null
 
-const { ipcMain } = require('electron');
-const fs = require('fs');
+	const selectedPath = result.filePaths[0]
+	fs.writeFileSync(CONFIG_PATH, JSON.stringify({ path: selectedPath }))
+	return selectedPath
+})
 
-ipcMain.handle('dialog:openFolder', async () => {
-  const result = await dialog.showOpenDialog({
-    properties: ['openDirectory']
-  });
+ipcMain.handle('get-folder', () => {
+	if (!fs.existsSync(CONFIG_PATH)) return null
+	const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'))
+	if (!fs.existsSync(config.path)) return null
+	return config.path
+})
 
-  if (result.canceled) return [];
+ipcMain.handle('watch-folder', (event, basePath) => {
+	if (currentWatcher) {
+		currentWatcher.close()
+		currentWatcher = null
+	}
 
-  const folderPath = result.filePaths[0];
-  const files = fs.readdirSync(folderPath);
-  const audioFiles = files
-    .filter(file => file.endsWith('.mp3') || file.endsWith('.wav'))
-    .map(file => ({
-      name: file,
-      path: path.join(folderPath, file)
-    }));
+	currentWatcher = fs.watch(basePath, { recursive: true }, () => {
+		event.sender.send('folder-changed')
+	})
+})
 
-  return audioFiles;
-});
+function scanDirectoryRecursively(dirPath) {
+	const items = fs.readdirSync(dirPath, { withFileTypes: true })
+	return items.map((item) => {
+		const fullPath = path.join(dirPath, item.name)
+		const isDir = item.isDirectory()
+		return {
+			name: item.name,
+			path: fullPath,
+			isDirectory: isDir,
+			children: isDir ? scanDirectoryRecursively(fullPath) : null,
+			isMp3: fullPath.toLowerCase().endsWith('.mp3')
+		}
+	})
+}
+
+ipcMain.handle('get-directory-structure', (_, basePath) => {
+	if (!fs.existsSync(basePath)) return []
+	return scanDirectoryRecursively(basePath)
+})
+
+app.whenReady().then(createWindow)
