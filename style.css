@@ -7,7 +7,7 @@ body {
 	border: 1px solid #ccc;
 	padding: 10px;
 	background: #f5f5f5;
-	max-height: 400px;
+	max-height: 525px;
 	overflow: auto;
 }
 ul {

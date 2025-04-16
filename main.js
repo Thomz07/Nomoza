@@ -18,6 +18,10 @@ function createWindow() {
 	win.loadFile('index.html')
 }
 
+ipcMain.handle('path:dirname', (_, p) => path.dirname(p))
+ipcMain.handle('path:basename', (_, p) => path.basename(p))
+ipcMain.handle('path:join', (_, ...args) => path.join(...args))
+
 ipcMain.handle('select-folder', async () => {
 	const result = await dialog.showOpenDialog({
 		properties: ['openDirectory']
@@ -36,7 +40,7 @@ ipcMain.handle('get-folder', () => {
 	return config.path
 })
 
-ipcMain.handle('watch-folder', (event, basePath) => {
+ipcMain.handle('watch-folder', (event, basePath) => { // Pour le rafraichissement en direct
 	if (currentWatcher) {
 		currentWatcher.close()
 		currentWatcher = null
@@ -45,6 +49,21 @@ ipcMain.handle('watch-folder', (event, basePath) => {
 	currentWatcher = fs.watch(basePath, { recursive: true }, () => {
 		event.sender.send('folder-changed')
 	})
+})
+
+ipcMain.handle('move-item', async (_, source, targetPath) => {
+    console.log("move-item called")
+	console.log("source:", source)
+	console.log("target:", targetPath)
+	try {
+		if (fs.existsSync(targetPath)) {
+			return { success: false, message: 'Un fichier du même nom existe déjà.' }
+		}
+		fs.renameSync(source, targetPath)
+		return { success: true }
+	} catch (err) {
+		return { success: false, message: err.message }
+	}
 })
 
 function scanDirectoryRecursively(dirPath) {
