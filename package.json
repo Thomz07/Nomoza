@@ -1,0 +1,23 @@
+{
+  "name": "nomoza",
+  "version": "1.0.0",
+  "description": "Nomoza",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Thomz07/Nomoza.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Thomz07/Nomoza/issues"
+  },
+  "homepage": "https://github.com/Thomz07/Nomoza#readme",
+  "devDependencies": {
+    "electron": "^35.1.5"
+  }
+}
