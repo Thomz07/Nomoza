@@ -7,6 +7,7 @@ async function loadAndRenderTree(basePath) {
 	treeContainer.innerHTML = ''
 	treeContainer.appendChild(renderTree(structure))
 	await window.electronAPI.watchFolder(basePath)
+  folderPathSpan.textContent = basePath
 }
 
 function renderTree(items) {
@@ -41,7 +42,6 @@ function renderTree(items) {
       const sourcePath = e.dataTransfer.getData('sourcePath')
       if (!sourcePath) return
 
-      const isTargetDir = item.isDirectory
       const destinationDir = item.isDirectory
         ? item.path
         : await window.pathAPI.dirname(item.path)
