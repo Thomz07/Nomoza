@@ -31,8 +31,8 @@ export async function updateInfoPanel(item) {
 		infoDate.textContent = '—'
 		infoPanelTitle.textContent = 'Détails du dossier'
 		playButton.style.display = 'none'
-	} else {
-		const stats = await getFileStats(item.path)
+	} else if (item.isMp3) {
+        const stats = await getFileStats(item.path)
 		infoSize.textContent = formatBytes(stats.size)
 		infoDate.textContent = new Date(stats.mtime).toLocaleString()
 		infoPanelTitle.textContent = 'Détails du fichier'
@@ -48,5 +48,11 @@ export async function updateInfoPanel(item) {
 			currentTrack.textContent = item.name
 			playToggle.textContent = '⏸️'
 		}
+    } else {
+		const stats = await getFileStats(item.path)
+		infoSize.textContent = formatBytes(stats.size)
+		infoDate.textContent = new Date(stats.mtime).toLocaleString()
+		infoPanelTitle.textContent = 'Détails du fichier'
+		playButton.style.display = 'none'
 	}
 }
