@@ -1,0 +1,10 @@
+{
+	"panel_file_title": "File Details",
+	"panel_folder_title": "Folder Details",
+	"label_name": "Name",
+	"label_path": "Path",
+	"label_size": "Size",
+	"label_modified": "Last Modified",
+	"filter_mp3": "Hide non-music files",
+	"select_folder": "Select your USB key"
+}

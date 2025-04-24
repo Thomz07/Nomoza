@@ -43,3 +43,7 @@ li {
 #info-panel h2 {
 	margin-top: 0;
 }
+.selected {
+	color: #007bff;
+	font-weight: bold;
+}

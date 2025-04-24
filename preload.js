@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
+	getLocalization: (lang) => ipcRenderer.invoke('get-localization', lang),
 	selectFolder: () => ipcRenderer.invoke('select-folder'),
 	getSavedFolder: () => ipcRenderer.invoke('get-folder'),
 	getDirectoryStructure: (path) => ipcRenderer.invoke('get-directory-structure', path),

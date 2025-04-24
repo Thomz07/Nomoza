@@ -7,21 +7,22 @@
 </head>
 <body>
 	<h1>DJ Library manager</h1>
-	<button id="select-folder">Select your USB key</button>
+	<button id="select-folder">Séléctionne ta clé USB</button>
     <span id="folder-path"></span>
     <label style="margin-left: 10px;">
         <input type="checkbox" id="filter-mp3" checked>
-        Hide non-music files
+        Cacher les fichiers hors musique
     </label>
     
 
 	<div id="tree"></div>
 	<div id="info-panel" class="hidden">
-		<h2 id="info-title">Détails du fichier</h2>
+		<h2 id="info-title">Détails du fichier</h2> <!--Fix le fait que ça dépasse du panel-->
 		<p><strong>Nom :</strong> <span id="info-name"></span></p>
 		<p><strong>Chemin :</strong> <span id="info-path"></span></p>
 		<p><strong>Taille :</strong> <span id="info-size"></span></p>
 		<p><strong>Modifié le :</strong> <span id="info-date"></span></p>
+		<button id="close-panel" style="margin-top: 20px;">Close</button>
 	</div>
 	
 	<script src="renderer.js"></script>

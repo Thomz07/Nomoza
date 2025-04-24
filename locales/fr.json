@@ -1,0 +1,10 @@
+{
+	"panel_file_title": "Détails du fichier",
+	"panel_folder_title": "Détails du dossier",
+	"label_name": "Nom",
+	"label_path": "Chemin",
+	"label_size": "Taille",
+	"label_modified": "Modifié le",
+	"filter_mp3": "Masquer les fichiers non musicaux",
+	"select_folder": "Sélectionner votre clé USB"
+}

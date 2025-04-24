@@ -40,14 +40,6 @@ function getFolderStats(folderPath) {
 	return { totalSize, fileCount }
 }
 
-ipcMain.handle('get-folder-stats', (_, folderPath) => {
-	try {
-		return getFolderStats(folderPath)
-	} catch {
-		return { totalSize: 0, fileCount: 0 }
-	}
-})
-
 function scanDirectoryRecursively(dirPath) {
 	const items = fs.readdirSync(dirPath, { withFileTypes: true })
 	return items.map((item) => {
@@ -62,6 +54,11 @@ function scanDirectoryRecursively(dirPath) {
 		}
 	})
 }
+
+ipcMain.handle('get-localization', async (_, lang = 'en') => {
+	const filePath = path.join(__dirname, 'locales', `${lang}.json`)
+	return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+})
 
 ipcMain.handle('path:dirname', (_, p) => path.dirname(p))
 ipcMain.handle('path:basename', (_, p) => path.basename(p))
@@ -121,6 +118,14 @@ ipcMain.handle('get-file-stats', async (_, filePath) => {
 		return fs.statSync(filePath)
 	} catch (e) {
 		return { size: 0, mtime: null }
+	}
+})
+
+ipcMain.handle('get-folder-stats', (_, folderPath) => {
+	try {
+		return getFolderStats(folderPath)
+	} catch {
+		return { totalSize: 0, fileCount: 0 }
 	}
 })
 
