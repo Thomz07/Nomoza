@@ -2,6 +2,12 @@ const folderButton = document.getElementById('select-folder')
 const treeContainer = document.getElementById('tree')
 const folderPathSpan = document.getElementById('folder-path')
 const filterCheckbox = document.getElementById('filter-mp3')
+const infoPanelTitle = document.getElementById('info-title')
+const infoPanel = document.getElementById('info-panel')
+const infoName = document.getElementById('info-name')
+const infoPath = document.getElementById('info-path')
+const infoSize = document.getElementById('info-size')
+const infoDate = document.getElementById('info-date')
 
 async function loadAndRenderTree(basePath) {
 	const structure = await window.electronAPI.getDirectoryStructure(basePath)
@@ -20,7 +26,7 @@ function renderTree(items, filterMp3) {
 		const li = document.createElement('li')
 		const icon = item.isDirectory ? '📁' : (item.isMp3 ? '🎵' : '📄')
 		const span = document.createElement('span')
-		span.textContent = `${icon} ${item.name}`
+		span.textContent = `${icon} ${item.name}`			
 		span.setAttribute('data-path', item.path)
 		span.draggable = true
 
@@ -66,6 +72,25 @@ function renderTree(items, filterMp3) {
 		})
 
 		li.appendChild(span)
+		li.addEventListener('dblclick', async () => {
+			if (!item.isDirectory && item.isMp3) {
+				const stats = await window.electronAPI.getFileStats(item.path)
+				infoPanelTitle.textContent = "Détails du fichier"
+				infoName.textContent = item.name
+				infoPath.textContent = item.path
+				infoSize.textContent = `${(stats.size / 1024).toFixed(1)} Ko`
+				infoDate.textContent = new Date(stats.mtime).toLocaleString()
+				infoPanel.classList.remove('hidden')
+			} else if (item.isDirectory) {
+				const folderStats = await window.electronAPI.getFolderStats(item.path)
+				infoPanelTitle.textContent  = "Détails du dossier"
+				infoName.textContent = item.name
+				infoPath.textContent = item.path
+				infoSize.textContent = `${(folderStats.totalSize / 1024).toFixed(1)} Ko pour ${folderStats.fileCount} fichiers`
+				infoDate.textContent = '—'
+				infoPanel.classList.remove('hidden')
+			}
+		})		
 
 		if (item.isDirectory && item.children) {
 			const childTree = renderTree(item.children, filterMp3)

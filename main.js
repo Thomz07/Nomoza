@@ -18,6 +18,51 @@ function createWindow() {
 	win.loadFile('index.html')
 }
 
+function getFolderStats(folderPath) {
+	let totalSize = 0
+	let fileCount = 0
+
+	function scan(dir) {
+		const entries = fs.readdirSync(dir, { withFileTypes: true })
+		for (const entry of entries) {
+			const fullPath = path.join(dir, entry.name)
+			if (entry.isDirectory()) {
+				scan(fullPath)
+			} else {
+				const stats = fs.statSync(fullPath)
+				totalSize += stats.size
+				fileCount++
+			}
+		}
+	}
+
+	scan(folderPath)
+	return { totalSize, fileCount }
+}
+
+ipcMain.handle('get-folder-stats', (_, folderPath) => {
+	try {
+		return getFolderStats(folderPath)
+	} catch {
+		return { totalSize: 0, fileCount: 0 }
+	}
+})
+
+function scanDirectoryRecursively(dirPath) {
+	const items = fs.readdirSync(dirPath, { withFileTypes: true })
+	return items.map((item) => {
+		const fullPath = path.join(dirPath, item.name)
+		const isDir = item.isDirectory()
+		return {
+			name: item.name,
+			path: fullPath,
+			isDirectory: isDir,
+			children: isDir ? scanDirectoryRecursively(fullPath) : null,
+			isMp3: fullPath.toLowerCase().endsWith('.mp3')
+		}
+	})
+}
+
 ipcMain.handle('path:dirname', (_, p) => path.dirname(p))
 ipcMain.handle('path:basename', (_, p) => path.basename(p))
 ipcMain.handle('path:join', (_, ...args) => path.join(...args))
@@ -66,24 +111,17 @@ ipcMain.handle('move-item', async (_, source, targetPath) => {
 	}
 })
 
-function scanDirectoryRecursively(dirPath) {
-	const items = fs.readdirSync(dirPath, { withFileTypes: true })
-	return items.map((item) => {
-		const fullPath = path.join(dirPath, item.name)
-		const isDir = item.isDirectory()
-		return {
-			name: item.name,
-			path: fullPath,
-			isDirectory: isDir,
-			children: isDir ? scanDirectoryRecursively(fullPath) : null,
-			isMp3: fullPath.toLowerCase().endsWith('.mp3')
-		}
-	})
-}
-
 ipcMain.handle('get-directory-structure', (_, basePath) => {
 	if (!fs.existsSync(basePath)) return []
 	return scanDirectoryRecursively(basePath)
+})
+
+ipcMain.handle('get-file-stats', async (_, filePath) => {
+	try {
+		return fs.statSync(filePath)
+	} catch (e) {
+		return { size: 0, mtime: null }
+	}
 })
 
 app.whenReady().then(createWindow)

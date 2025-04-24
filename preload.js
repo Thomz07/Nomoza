@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	watchFolder: (path) => ipcRenderer.invoke('watch-folder', path),
 	onFolderChanged: (callback) => ipcRenderer.on('folder-changed', callback),
 	moveItem: (source, destination) => ipcRenderer.invoke('move-item', source, destination),
+	getFileStats: (filePath) => ipcRenderer.invoke('get-file-stats', filePath),
+	getFolderStats: (path) => ipcRenderer.invoke('get-folder-stats', path)
 })
 
 contextBridge.exposeInMainWorld('pathAPI', {
