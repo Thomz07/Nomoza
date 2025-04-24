@@ -18,6 +18,7 @@
 	<div id="info-panel" class="hidden">
 		<h2 id="info-title">Détails du fichier</h2> <!--Fix le fait que ça dépasse du panel-->
 		<p><strong>Nom :</strong> <span id="info-name"></span></p>
+		<button id="play-button" style="margin-top: 10px; display: none;">Lire ce fichier</button>
 		<p><strong>Chemin :</strong> <span id="info-path"></span></p>
 		<p><strong>Taille :</strong> <span id="info-size"></span></p>
 		<p><strong>Modifié le :</strong> <span id="info-date"></span></p>
@@ -25,5 +26,11 @@
 	</div>
 	
 	<script src="renderer.js"></script>
+
+	<div id="audio-player">
+		<button id="play-toggle">▶️</button>
+		<span id="current-track">Aucune piste</span>
+		<audio id="audio"></audio>
+	</div>	
 </body>
 </html>

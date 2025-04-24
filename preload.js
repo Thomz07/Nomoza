@@ -15,5 +15,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
 contextBridge.exposeInMainWorld('pathAPI', {
 	dirname: (p) => ipcRenderer.invoke('path:dirname', p),
 	basename: (p) => ipcRenderer.invoke('path:basename', p),
-	join: (...args) => ipcRenderer.invoke('path:join', ...args)
+	join: (...args) => ipcRenderer.invoke('path:join', ...args),
 })

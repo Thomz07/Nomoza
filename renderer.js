@@ -12,6 +12,8 @@ const infoDate = document.getElementById('info-date')
 const closePanelBtn = document.getElementById('close-panel')
 let selectedPaths = []
 let lastSelectedSpan = null
+const playButton = document.getElementById('play-button')
+let currentItem = null
 /*let selectedPath = null
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -42,7 +44,8 @@ async function loadAndRenderTree(basePath) {
 	treeContainer.appendChild(renderTree(structure, filterCheckbox.checked))
 	await window.electronAPI.watchFolder(basePath)
 	folderPathSpan.textContent = basePath
-	if (selectedPath) {
+	if (selectedPaths.length === 1) {
+		const selectedPath = selectedPaths[0]	
 		const selectedSpan = [...document.querySelectorAll('#tree span')]
 			.find(span => span.getAttribute('data-path') === selectedPath)
 	
@@ -131,7 +134,6 @@ function renderTree(items, filterMp3) {
 			}
 		
 			if (movedSomething) {
-				// Met à jour les infos si le dossier affiché est concerné
 				if (selectedPaths.length === 1) {
 					const selectedPath = selectedPaths[0]
 					if (selectedPath === item.path || paths.includes(selectedPath)) {
@@ -201,6 +203,9 @@ function renderTree(items, filterMp3) {
 					infoPath.textContent = selectedPath
 					infoSize.textContent = formatBytes(stats.size)
 					infoDate.textContent = new Date(stats.mtime).toLocaleString()
+					currentItem = item
+
+					playButton.style.display = 'block'			
 				}
 			} else if (selectedPaths.length > 1) {
 				infoPanelTitle.textContent = "Éléments sélectionnés"
@@ -217,6 +222,7 @@ function renderTree(items, filterMp3) {
 				infoPath.textContent = '—'
 				infoSize.textContent = formatBytes(totalSize)
 				infoDate.textContent = '—'
+				playButton.style.display = 'none'
 			}
 
 			infoPanel.classList.remove('hidden')
@@ -250,6 +256,31 @@ window.addEventListener('DOMContentLoaded', async () => {
 	if (savedPath) {
 		await loadAndRenderTree(savedPath)
 	}
+
+	const audio = document.getElementById('audio')
+	const playToggle = document.getElementById('play-toggle')
+	const currentTrack = document.getElementById('current-track')
+	playToggle.addEventListener('click', () => {
+		if (!audio.src) return
+		if (audio.paused) {
+			audio.play()
+			playToggle.textContent = '⏸️'
+		} else {
+			audio.pause()
+			playToggle.textContent = '▶️'
+		}
+	})
+	playButton.onclick = () => {
+		if (!currentItem) return
+	
+		const path = currentItem.path
+		const fileUrl = `file://${path.replace(/\\/g, '/')}`
+		audio.src = encodeURI(fileUrl)
+		audio.play()
+	
+		currentTrack.textContent = currentItem.name
+		playToggle.textContent = '⏸️'
+	}			
 })
 
 window.electronAPI.onFolderChanged(() => {
