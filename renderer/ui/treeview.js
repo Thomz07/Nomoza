@@ -39,6 +39,7 @@ export async function initTreeView() {
 		const structure = await getDirectoryStructure(basePath)
 		treeContainer.innerHTML = ''
 		treeContainer.appendChild(renderTree(structure, filterCheckbox.checked))
+        await window.electronAPI.watchFolder(basePath)
 	}
 
 	function renderTree(items, filterMp3 = false) {
@@ -193,6 +194,11 @@ export async function initTreeView() {
             const savedPath = await getSavedFolder()
             if (savedPath) await loadTree(savedPath)
         }
+    })   
+    
+    window.electronAPI.onFolderChanged(async () => {
+        const path = await getSavedFolder()
+        if (path) await loadTree(path)
     })    
 }
 
