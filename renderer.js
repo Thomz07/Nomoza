@@ -10,6 +10,8 @@ const infoPath = document.getElementById('info-path')
 const infoSize = document.getElementById('info-size')
 const infoDate = document.getElementById('info-date')
 const closePanelBtn = document.getElementById('close-panel')
+let selectedPaths = []
+let lastSelectedSpan = null
 /*let selectedPath = null
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -81,9 +83,13 @@ function renderTree(items, filterMp3) {
 		span.draggable = true
 
 		span.addEventListener('dragstart', (e) => {
-			e.dataTransfer.setData('sourcePath', item.path)
+			let pathsToMove = selectedPaths.includes(item.path)
+				? selectedPaths
+				: [item.path]
+		
+			e.dataTransfer.setData('paths', JSON.stringify(pathsToMove))
 			e.stopPropagation()
-		})
+		})		
 
 		span.addEventListener('dragover', (e) => {
 			e.preventDefault()
@@ -97,80 +103,124 @@ function renderTree(items, filterMp3) {
 		span.addEventListener('drop', async (e) => {
 			e.preventDefault()
 			span.style.backgroundColor = ''
-
-			const sourcePath = e.dataTransfer.getData('sourcePath')
-			if (!sourcePath) return
-
+		
+			const raw = e.dataTransfer.getData('paths')
+			if (!raw) return
+		
+			const paths = JSON.parse(raw)
+		
 			const destinationDir = item.isDirectory
 				? item.path
 				: await window.pathAPI.dirname(item.path)
-
-			const filename = await window.pathAPI.basename(sourcePath)
-			const targetPath = await window.pathAPI.join(destinationDir, filename)
-
-			if (sourcePath === targetPath) return
-
-			const result = await window.electronAPI.moveItem(sourcePath, targetPath)
-			const sourceDir = await window.pathAPI.dirname(sourcePath)
-
-			if (selectedPath && selectedPath === sourceDir) {
-				const folderStats = await window.electronAPI.getFolderStats(selectedPath)
-				infoPanelTitle.textContent = "Détails du dossier"
-				infoSize.textContent = `${(folderStats.totalSize / 1024).toFixed(1)} Ko pour ${folderStats.fileCount} fichiers`
-				infoDate.textContent = '—'
+		
+			let movedSomething = false
+		
+			for (const sourcePath of paths) {
+				const filename = await window.pathAPI.basename(sourcePath)
+				const targetPath = await window.pathAPI.join(destinationDir, filename)
+		
+				if (sourcePath === targetPath) continue
+		
+				const result = await window.electronAPI.moveItem(sourcePath, targetPath)
+		
+				if (!result.success) {
+					alert(`Erreur en déplaçant ${filename} : ${result.message}`)
+				} else {
+					movedSomething = true
+				}
 			}
-
-			console.log("sourcePath:", sourcePath)
-			console.log("destinationDir:", destinationDir)
-			console.log("targetPath:", targetPath)
-
-			if (!result.success) {
-				alert('Erreur : ' + result.message)
+		
+			if (movedSomething) {
+				// Met à jour les infos si le dossier affiché est concerné
+				if (selectedPaths.length === 1) {
+					const selectedPath = selectedPaths[0]
+					if (selectedPath === item.path || paths.includes(selectedPath)) {
+						const stats = await window.electronAPI.getFolderStats(selectedPath)
+						infoPanelTitle.textContent = "Détails du dossier"
+						infoSize.textContent = `${formatBytes(stats.totalSize)} pour ${stats.fileCount} fichiers`
+						infoDate.textContent = '—'
+					}
+				}
+		
+				const savedPath = await window.electronAPI.getSavedFolder()
+				if (savedPath) await loadAndRenderTree(savedPath)
 			}
-
-			if (item.isDirectory && item.path === selectedPath) {
-				const folderStats = await window.electronAPI.getFolderStats(item.path)
-				infoPanelTitle.textContent = "Détails du dossier"
-				infoSize.textContent = `${formatBytes(folderStats.totalSize)} for ${folderStats.fileCount} files`
-				infoDate.textContent = '—'
-			}			
 		})
 
 		li.appendChild(span)
-		span.addEventListener('dblclick', async (e) => {
-			e.stopPropagation()
-		
-			const isAlreadySelected = span.classList.contains('selected')
-		
-			if (isAlreadySelected) {
-				infoPanel.classList.add('hidden')
-				span.classList.remove('selected')
-				selectedPath = null
-				return
+
+		span.addEventListener('click', async (e) => {
+			const path = item.path
+			const isSelected = selectedPaths.includes(path)
+
+			if (e.ctrlKey || e.metaKey) {
+				if (isSelected) {
+					selectedPaths = selectedPaths.filter(p => p !== path)
+					span.classList.remove('selected')
+				} else {
+					selectedPaths.push(path)
+					span.classList.add('selected')
+				}
+				lastSelectedSpan = span
+			} else if (e.shiftKey && lastSelectedSpan) {
+				const allSpans = [...document.querySelectorAll('#tree span')]
+				const currentIndex = allSpans.indexOf(span)
+				const lastIndex = allSpans.indexOf(lastSelectedSpan)
+				const [start, end] = [currentIndex, lastIndex].sort((a, b) => a - b)
+
+				selectedPaths = []
+				document.querySelectorAll('#tree span').forEach(s => s.classList.remove('selected'))
+
+				for (let i = start; i <= end; i++) {
+					const s = allSpans[i]
+					selectedPaths.push(s.getAttribute('data-path'))
+					s.classList.add('selected')
+				}
+			} else {
+				selectedPaths = [path]
+				document.querySelectorAll('#tree span').forEach(s => s.classList.remove('selected'))
+				span.classList.add('selected')
+				lastSelectedSpan = span
 			}
-		
-			document.querySelectorAll('#tree span').forEach((el) => el.classList.remove('selected'))
-			span.classList.add('selected')
-			selectedPath = item.path
-		
-			if (!item.isDirectory && item.isMp3) {
-				const stats = await window.electronAPI.getFileStats(item.path)
-				infoPanelTitle.textContent = "Détails du fichier"
-				infoName.textContent = item.name
-				infoPath.textContent = item.path
-				infoSize.textContent = formatBytes(stats.size)
-				infoDate.textContent = new Date(stats.mtime).toLocaleString()
-				infoPanel.classList.remove('hidden')
-			} else if (item.isDirectory) {
-				const folderStats = await window.electronAPI.getFolderStats(item.path)
-				infoPanelTitle.textContent = "Détails du dossier"
-				infoName.textContent = item.name
-				infoPath.textContent = item.path
-				infoSize.textContent = `${formatBytes(folderStats.totalSize)} pour ${folderStats.fileCount} fichiers`
+
+			if (selectedPaths.length === 1) {
+				const selectedPath = selectedPaths[0]
+				const isDir = item.isDirectory
+
+				if (isDir) {
+					const stats = await window.electronAPI.getFolderStats(selectedPath)
+					infoPanelTitle.textContent = "Détails du dossier"
+					infoName.textContent = item.name
+					infoPath.textContent = selectedPath
+					infoSize.textContent = `${formatBytes(stats.totalSize)} pour ${stats.fileCount} fichiers`
+					infoDate.textContent = '—'
+				} else {
+					const stats = await window.electronAPI.getFileStats(selectedPath)
+					infoPanelTitle.textContent = "Détails du fichier"
+					infoName.textContent = item.name
+					infoPath.textContent = selectedPath
+					infoSize.textContent = formatBytes(stats.size)
+					infoDate.textContent = new Date(stats.mtime).toLocaleString()
+				}
+			} else if (selectedPaths.length > 1) {
+				infoPanelTitle.textContent = "Éléments sélectionnés"
+
+				let totalSize = 0
+				for (const p of selectedPaths) {
+					try {
+						const stat = await window.electronAPI.getFileStats(p)
+						totalSize += stat.size
+					} catch { }
+				}
+
+				infoName.textContent = `${selectedPaths.length} fichiers`
+				infoPath.textContent = '—'
+				infoSize.textContent = formatBytes(totalSize)
 				infoDate.textContent = '—'
-				infoPanel.classList.remove('hidden')
 			}
-		})			
+
+			infoPanel.classList.remove('hidden')
+		})
 
 		if (item.isDirectory && item.children) {
 			const childTree = renderTree(item.children, filterMp3)
@@ -212,4 +262,53 @@ closePanelBtn.addEventListener('click', () => {
 	infoPanel.classList.add('hidden')
 	document.querySelectorAll('#tree span').forEach(el => el.classList.remove('selected'))
 	selectedPath = null
+})
+
+treeContainer.addEventListener('dragover', (e) => {
+	e.preventDefault()
+	if (e.target === treeContainer) {
+		treeContainer.classList.add('drop-root')
+	}
+})
+
+treeContainer.addEventListener('dragleave', (e) => {
+	if (e.target === treeContainer) {
+		treeContainer.classList.remove('drop-root')
+	}
+})
+
+treeContainer.addEventListener('drop', async (e) => {
+	treeContainer.classList.remove('drop-root')
+	if (e.target !== treeContainer) return
+	e.preventDefault()
+
+	treeContainer.style.backgroundColor = ''
+
+	const raw = e.dataTransfer.getData('paths')
+	if (!raw) return
+
+	const paths = JSON.parse(raw)
+	const destinationDir = folderPathSpan.textContent
+
+	let movedSomething = false
+
+	for (const sourcePath of paths) {
+		const filename = await window.pathAPI.basename(sourcePath)
+		const targetPath = await window.pathAPI.join(destinationDir, filename)
+
+		if (sourcePath === targetPath) continue
+
+		const result = await window.electronAPI.moveItem(sourcePath, targetPath)
+
+		if (!result.success) {
+			alert(`Erreur en déplaçant ${filename} : ${result.message}`)
+		} else {
+			movedSomething = true
+		}
+	}
+
+	if (movedSomething) {
+		const savedPath = await window.electronAPI.getSavedFolder()
+		if (savedPath) await loadAndRenderTree(savedPath)
+	}
 })
