@@ -27,5 +27,28 @@ export function initPlayer() {
 	progressBar.addEventListener('input', () => {
 		const seekTime = (progressBar.value / 100) * audio.duration
 		audio.currentTime = seekTime
+        progressBar.blur()
 	})
+
+    progressBar.addEventListener('mouseup', () => {
+        progressBar.blur()
+    })    
+
+    audio.addEventListener('ended', () => {
+        playToggle.textContent = '▶️'
+    })
+
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            e.preventDefault()
+            if (!audio.src) return
+            if (audio.paused) {
+                audio.play()
+                playToggle.textContent = '⏸️'
+            } else {
+                audio.pause()
+                playToggle.textContent = '▶️'
+            }
+        }
+    })    
 }

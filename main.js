@@ -50,7 +50,7 @@ function scanDirectoryRecursively(dirPath) {
 			path: fullPath,
 			isDirectory: isDir,
 			children: isDir ? scanDirectoryRecursively(fullPath) : null,
-			isMp3: fullPath.toLowerCase().endsWith('.mp3')
+			isMp3: ['.mp3', '.wav', '.flac', '.ogg', '.aac', '.m4a'].some(ext => fullPath.toLowerCase().endsWith(ext))
 		}
 	})
 }
