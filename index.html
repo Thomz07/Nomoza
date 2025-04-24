@@ -25,12 +25,14 @@
 		<button id="close-panel" style="margin-top: 20px;">Close</button>
 	</div>
 	
-	<script src="renderer.js"></script>
-
 	<div id="audio-player">
 		<button id="play-toggle">▶️</button>
 		<span id="current-track">Aucune piste</span>
+		<span id="time-display">0:00 / 0:00</span>
+		<input type="range" id="progress-bar" min="0" max="100" value="0">
 		<audio id="audio"></audio>
 	</div>	
+
+	<script type="module" src="./renderer/app.js"></script>
 </body>
 </html>

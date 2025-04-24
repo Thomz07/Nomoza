@@ -136,3 +136,4 @@ dist
 .pnp.*
 
 Tests songs/
+.DS_Store

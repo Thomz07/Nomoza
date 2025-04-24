@@ -82,7 +82,7 @@ ipcMain.handle('get-folder', () => {
 	return config.path
 })
 
-ipcMain.handle('watch-folder', (event, basePath) => { // Pour le rafraichissement en direct
+ipcMain.handle('watch-folder', (event, basePath) => {
 	if (currentWatcher) {
 		currentWatcher.close()
 		currentWatcher = null

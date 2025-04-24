@@ -1,0 +1,7 @@
+export const getLocalization = (lang) => window.electronAPI.getLocalization(lang)
+export const selectFolder = () => window.electronAPI.selectFolder()
+export const getSavedFolder = () => window.electronAPI.getSavedFolder()
+export const getDirectoryStructure = (path) => window.electronAPI.getDirectoryStructure(path)
+export const moveItem = (source, destination) => window.electronAPI.moveItem(source, destination)
+export const getFileStats = (path) => window.electronAPI.getFileStats(path)
+export const getFolderStats = (path) => window.electronAPI.getFolderStats(path)
