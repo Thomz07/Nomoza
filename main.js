@@ -1,6 +1,9 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs')
+const mm = require('music-metadata')
+const { spawn } = require('child_process')
+let pythonServerProcess = null
 let currentWatcher = null
 
 const CONFIG_PATH = path.join(__dirname, 'config.json')
@@ -16,6 +19,29 @@ function createWindow() {
 		}
 	})
 	win.loadFile('index.html')
+
+	const isPythonAvailable = () => {
+		try {
+			require('child_process').execSync('python3 --version')
+			return true
+		} catch {
+			return false
+		}
+	}
+	
+	if (isPythonAvailable()) {
+		pythonServerProcess = spawn('uvicorn', ['server:app'], {
+			cwd: __dirname,
+			shell: true,
+			stdio: 'inherit'
+		})		
+	
+		pythonServer.on('error', (err) => {
+			console.error('Erreur au démarrage du serveur Python :', err)
+		})
+	} else {
+		console.error('Python3 n’est pas disponible')
+	}
 }
 
 function getFolderStats(folderPath) {
@@ -63,6 +89,25 @@ ipcMain.handle('get-localization', async (_, lang = 'en') => {
 ipcMain.handle('path:dirname', (_, p) => path.dirname(p))
 ipcMain.handle('path:basename', (_, p) => path.basename(p))
 ipcMain.handle('path:join', (_, ...args) => path.join(...args))
+ipcMain.handle('path:parse', (_, p) => {
+	const parsed = path.parse(p)
+	return parsed.name
+})
+ipcMain.handle('path:extname', (_, p) => path.extname(p).slice(1))
+
+ipcMain.handle('audio:getMetadata', async (_, filePath) => {
+	try {
+		const metadata = await mm.parseFile(filePath)
+		return {
+			duration: metadata.format.duration,
+			bitrate: metadata.format.bitrate,
+			sampleRate: metadata.format.sampleRate
+		}
+	} catch (err) {
+		console.error('Erreur extraction metadata audio :', err)
+		return null
+	}
+})
 
 ipcMain.handle('select-folder', async () => {
 	const result = await dialog.showOpenDialog({
@@ -130,3 +175,12 @@ ipcMain.handle('get-folder-stats', (_, folderPath) => {
 })
 
 app.whenReady().then(createWindow)
+app.on('before-quit', () => {
+	if (pythonServerProcess) {
+		try {
+			process.kill(-pythonServerProcess.pid)
+		} catch (e) {
+			console.warn('Le processus Python était déjà mort.')
+		}
+	}
+})

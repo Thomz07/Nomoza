@@ -46,6 +46,7 @@ export async function initTreeView() {
 		const ul = document.createElement('ul')
 
 		for (const item of items) {
+            if (item.name.startsWith('._')) continue
 			if (!item.isDirectory && filterMp3 && !item.isMp3) continue
 
 			const li = document.createElement('li')
@@ -55,7 +56,10 @@ export async function initTreeView() {
 			span.setAttribute('data-path', item.path)
 			span.draggable = true
 
-			// sélection (simple, ctrl, shift)
+            const toggle = document.createElement('span')
+            toggle.textContent = item.isDirectory ? '▾ ' : ''
+            toggle.classList.add('toggle-icon')
+
 			span.addEventListener('click', async (e) => {
 				const path = item.path
 				const isSelected = selectedPaths.includes(path)
@@ -92,6 +96,7 @@ export async function initTreeView() {
 
 				if (selectedPaths.length === 1) {
 					updateInfoPanel(item)
+                    document.getElementById('play-button').style.display = 'block'
 				} else {
 					document.getElementById('info-panel').classList.remove('hidden')
 					document.getElementById('info-title').textContent = "Éléments sélectionnés"
@@ -105,7 +110,6 @@ export async function initTreeView() {
                         } catch { }
                     }
                     document.getElementById('info-size').textContent = `${formatBytes(totalSize)} pour ${selectedPaths.length} fichiers`
-					document.getElementById('info-date').textContent = '—'
 					document.getElementById('play-button').style.display = 'none'
 				}
 			})
@@ -146,11 +150,19 @@ export async function initTreeView() {
 				}
 			})
 
+            li.appendChild(toggle)
 			li.appendChild(span)
 			if (item.isDirectory && item.children) {
-				const childTree = renderTree(item.children, filterMp3)
-				li.appendChild(childTree)
-			}
+                const childTree = renderTree(item.children, filterMp3)
+                li.appendChild(childTree)
+            
+                toggle.style.cursor = 'pointer'
+                toggle.addEventListener('click', () => {
+                    const isHidden = childTree.style.display === 'none'
+                    childTree.style.display = isHidden ? 'block' : 'none'
+                    toggle.textContent = isHidden ? '▾ ' : '▸ '
+                })
+            }            
 			ul.appendChild(li)
 		}
 

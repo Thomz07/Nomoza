@@ -18,11 +18,18 @@
 	<div id="info-panel" class="hidden">
 		<h2 id="info-title">Détails du fichier</h2> <!--Fix le fait que ça dépasse du panel-->
 		<p><strong>Nom :</strong> <span id="info-name"></span></p>
-		<button id="play-button" style="margin-top: 10px; display: none;">Lire ce fichier</button>
+		<p>Format : <span id="info-format"></span></p>
+		<div id="info-music-details">
+			<button id="play-button" style="margin-top: 10px; display: block;">Lire ce fichier</button>
+			<div>Durée : <span id="info-duration"></span></div>
+			<div>Bitrate : <span id="info-bitrate"></span></div>
+			<div>Échantillonnage : <span id="info-samplerate"></span></div>
+			<div>BPM : <span id="info-bpm">—</span></div>
+			<div>Tonalité : <span id="info-key">—</span></div>
+		</div>
 		<p><strong>Chemin :</strong> <span id="info-path"></span></p>
 		<p><strong>Taille :</strong> <span id="info-size"></span></p>
-		<p><strong>Modifié le :</strong> <span id="info-date"></span></p>
-		<button id="close-panel" style="margin-top: 20px;">Close</button>
+		<button id="close-panel" style="margin-top: 20px;">Fermer</button>
 	</div>
 	
 	<div id="audio-player">
