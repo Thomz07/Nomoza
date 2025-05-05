@@ -1,7 +1,6 @@
 import { getFileStats, getFolderStats } from '../api/electron-api.js'
 import { formatBytes } from '../utils/format.js'
 import { clearSelection } from './treeview.js'
-import { analyzeAudioWithPython } from '../api/python-api.js'
 
 let playButton, infoName, infoFormat, infoDuration, infoBitrate, infoSamplerate, infoMusicDetails, infoPath, infoSize, infoPanelTitle
 let infoBpm, infoKey
@@ -65,13 +64,6 @@ export async function updateInfoPanel(item) {
 			infoDuration.textContent = `${mins}:${secs}`
 			infoBitrate.textContent = `${Math.round(metadata.bitrate / 1000)} kbps`
 			infoSamplerate.textContent = `${metadata.sampleRate} Hz`
-		}
-
-		const pythonResult = await analyzeAudioWithPython(item.path)
-		if (pythonResult && pythonResult.bpm && pythonResult.key) {
-			infoBpm.textContent = `${pythonResult.bpm} BPM`
-			infoKey.textContent = pythonResult.key
-		} else {
 			infoBpm.textContent = '—'
 			infoKey.textContent = '—'
 		}

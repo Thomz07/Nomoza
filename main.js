@@ -2,8 +2,6 @@ const { app, BrowserWindow, dialog, ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const mm = require('music-metadata')
-const { spawn } = require('child_process')
-let pythonServerProcess = null
 let currentWatcher = null
 
 const CONFIG_PATH = path.join(__dirname, 'config.json')
@@ -19,29 +17,6 @@ function createWindow() {
 		}
 	})
 	win.loadFile('index.html')
-
-	const isPythonAvailable = () => {
-		try {
-			require('child_process').execSync('python3 --version')
-			return true
-		} catch {
-			return false
-		}
-	}
-	
-	if (isPythonAvailable()) {
-		pythonServerProcess = spawn('uvicorn', ['server:app'], {
-			cwd: __dirname,
-			shell: true,
-			stdio: 'inherit'
-		})		
-	
-		pythonServer.on('error', (err) => {
-			console.error('Erreur au démarrage du serveur Python :', err)
-		})
-	} else {
-		console.error('Python3 n’est pas disponible')
-	}
 }
 
 function getFolderStats(folderPath) {
@@ -175,12 +150,3 @@ ipcMain.handle('get-folder-stats', (_, folderPath) => {
 })
 
 app.whenReady().then(createWindow)
-app.on('before-quit', () => {
-	if (pythonServerProcess) {
-		try {
-			process.kill(-pythonServerProcess.pid)
-		} catch (e) {
-			console.warn('Le processus Python était déjà mort.')
-		}
-	}
-})
